@@ -127,15 +127,33 @@ if [[ "$IS_KVM" -eq 0 ]]; then
   fi
 fi
 
+VOLUMES=(
+  "sentry-data"
+  "sentry-postgres"
+  "sentry-redis"
+  "sentry-zookeeper"
+  "sentry-kafka"
+  "sentry-clickhouse"
+  "sentry-symbolicator"
+  "sentry-secrets"
+  "sentry-smtp"
+)
+
 echo ""
 echo "Creating volumes for persistent storage..."
-echo "Created $(docker volume create --name=sentry-data)."
-echo "Created $(docker volume create --name=sentry-postgres)."
-echo "Created $(docker volume create --name=sentry-redis)."
-echo "Created $(docker volume create --name=sentry-zookeeper)."
-echo "Created $(docker volume create --name=sentry-kafka)."
-echo "Created $(docker volume create --name=sentry-clickhouse)."
-echo "Created $(docker volume create --name=sentry-symbolicator)."
+for volumeName in ${VOLUMES[*]}; do
+  if [[ -z "$EFS_DNS_NAME_FOR_VOLUMES" ]]; then
+    docker volume create --name=$volumeName
+  else
+    mkdir -p /mnt/efs/$volumeName
+    docker volume create --driver local \
+      --opt type=nfs \
+      --opt o=nfsvers=4.1,addr=$EFS_DNS_NAME_FOR_VOLUMES,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,rw \
+      --opt device=:/$volumeName \
+      --name=$volumeName
+  fi
+  echo "Created $volumeName."
+done
 
 echo ""
 ensure_file_from_example $SENTRY_CONFIG_PY

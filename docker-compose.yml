@@ -229,7 +229,9 @@ volumes:
   sentry-symbolicator:
     external: true
   sentry-secrets:
+    external: true
   sentry-smtp:
+    external: true
   sentry-zookeeper-log:
   sentry-kafka-log:
   sentry-smtp-log:
