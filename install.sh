@@ -143,7 +143,17 @@ echo ""
 echo "Creating volumes for persistent storage..."
 for volumeName in ${VOLUMES[*]}; do
   if [[ -z "$EFS_DNS_NAME_FOR_VOLUMES" ]]; then
-    docker volume create --name=$volumeName
+    if [[ -z "$DATA_VOLUMES_DIRECTORY" ]]; then
+      docker volume create --name=$volumeName
+    else
+      volumeDevice="$DATA_VOLUMES_DIRECTORY/$volumeName"
+      mkdir -p $volumeDevice
+      docker volume create --driver local \
+        --opt type=none \
+        --opt o=bind \
+        --opt device=$volumeDevice \
+        --name=$volumeName
+    fi
   else
     mkdir -p /mnt/efs/$volumeName
     docker volume create --driver local \
